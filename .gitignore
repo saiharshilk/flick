@@ -7,3 +7,6 @@ references/
 # Local test images
 samples/
 out/
+
+# Local Claude settings
+.claude/settings.local.json

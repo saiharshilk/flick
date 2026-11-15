@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Flick Metadata Test</title>
+  <style>
+    :root {
+      --bg: #0f0f10; --card: #1a1a1c; --line: #2c2c30; --text: #f2f2f3; --muted: #9a9aa2;
+      --ok: #4ade80; --bad: #f87171; --warn: #fbbf24; --accent: #f472b6;
+    }
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        --bg: #f6f6f7; --card: #ffffff; --line: #e3e3e6; --text: #141416; --muted: #6b6b73;
+        --ok: #15803d; --bad: #b91c1c; --warn: #a16207; --accent: #db2777;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 15px/1.45 -apple-system, system-ui, sans-serif;
+      padding: max(16px, env(safe-area-inset-top)) 16px 48px;
+    }
+    main { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 1.6rem; margin: 8px 0 4px; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); margin: 0 0 20px; }
+    .pickers { display: grid; gap: 10px; margin-bottom: 8px; }
+    label.pick {
+      display: block; background: var(--accent); color: #fff; text-align: center;
+      padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer;
+    }
+    label.pick.alt { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+    label.pick small { display: block; font-weight: 400; opacity: .85; font-size: .8rem; }
+    input[type=file] { display: none; }
+    .hint { color: var(--muted); font-size: .85rem; margin: 0 0 20px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 16px; }
+    .card h2 { font-size: 1rem; margin: 0 0 2px; word-break: break-all; }
+    .card .file { color: var(--muted); font-size: .8rem; margin-bottom: 10px; }
+    .verdict { font-weight: 600; margin: 8px 0 10px; }
+    .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th, td { text-align: left; padding: 6px 4px; border-top: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 500; width: 28%; }
+    thead th { border-top: 0; }
+    td { word-break: break-word; }
+    .thumb { width: 100%; max-height: 240px; object-fit: contain; border-radius: 8px; background: #000; margin-bottom: 10px; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    button, a.btn {
+      font: inherit; font-weight: 600; padding: 12px; border-radius: 10px; border: 0;
+      background: var(--text); color: var(--bg); text-align: center; text-decoration: none; cursor: pointer;
+    }
+    button.secondary, a.btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
+    .steps { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 14px 34px; margin-top: 24px; }
+    .steps li { margin-bottom: 6px; }
+    #copy { width: 100%; margin-top: 8px; }
+    .note { font-size: .8rem; color: var(--muted); margin-top: 6px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Flick · metadata test</h1>
+  <p class="sub">No filter yet. This checks whether a photo's date and location survive a trip through the browser.</p>
+
+  <div class="pickers">
+    <label class="pick">Picker A
+      <small>standard (iPhone may convert to JPEG)</small>
+      <input id="pickA" type="file" accept="image/*" multiple>
+    </label>
+    <label class="pick alt">Picker B
+      <small>asks for the original HEIC</small>
+      <input id="pickB" type="file" accept="image/heic,image/heif,image/jpeg,image/png" multiple>
+    </label>
+  </div>
+  <p class="hint">Try both pickers. In the menu, also try <b>Choose File</b> (the Files app) as well as <b>Photo Library</b>. In the photo library, tap <b>Options</b> at the top and turn on Location if you see it.</p>
+
+  <div id="results"></div>
+  <button id="copy" class="secondary" hidden>Copy report to send to Claude</button>
+
+  <ol class="steps">
+    <li>Pick a photo you know has a location (it shows a map when you swipe up in Photos).</li>
+    <li>Check the <b>In</b> column: did the location reach the page?</li>
+    <li>Tap <b>Save to Photos</b>, then <b>Save Image</b>.</li>
+    <li>In Photos, check: is the copy next to the original (not at today's date)? Swipe up: does it show the map?</li>
+    <li>Tap <b>Copy report</b> and paste it to Claude, along with what you saw in Photos.</li>
+  </ol>
+</main>
+<script type="module" src="./test.js"></script>
+</body>
+</html>
