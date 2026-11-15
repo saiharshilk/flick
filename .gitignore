@@ -1,0 +1,9 @@
+# Private reference photos (people's faces), kept local only
+references/
+
+# macOS
+.DS_Store
+
+# Local test images
+samples/
+out/
