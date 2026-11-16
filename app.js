@@ -6,64 +6,85 @@ import { digicam } from './lib/digicam.js';
 const MAX_PIXELS = 16_000_000;
 const OUTPUT_QUALITY = 0.92;
 const PREVIEW_LONG = 900;
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
 const $ = (id) => document.getElementById(id);
-const picker = $('picker'), grid = $('grid'), empty = $('empty'), hint = $('hint');
-const bar = $('bar'), saveAll = $('saveAll'), clearBtn = $('clear'), stampToggle = $('stamp');
+const picker = $('picker'), prints = $('prints'), hint = $('hint'), prompt = $('prompt');
+const bar = $('bar'), saveAll = $('saveAll'), clearBtn = $('clear');
+const stampBtn = $('stamp'), screen = $('screen'), flashbulb = $('flashbulb');
 
 const items = [];
 let queue = Promise.resolve();
+let stampOn = false;
 
-// little orange "date stamp" in the header
-const now = new Date();
-$('today').textContent = `'${String(now.getFullYear() % 100).padStart(2, '0')} ${pad(now.getMonth() + 1)} ${pad(now.getDate())}`;
+// ---------- date stamp toggle ----------
 
-try { stampToggle.checked = localStorage.getItem('flick.stamp') === '1'; } catch {}
-stampToggle.addEventListener('change', () => {
-  try { localStorage.setItem('flick.stamp', stampToggle.checked ? '1' : '0'); } catch {}
+try { stampOn = localStorage.getItem('flick.stamp') === '1'; } catch {}
+renderStamp();
+stampBtn.addEventListener('click', () => {
+  stampOn = !stampOn;
+  try { localStorage.setItem('flick.stamp', stampOn ? '1' : '0'); } catch {}
+  renderStamp();
   for (const item of items) enqueue(item);
 });
+
+function renderStamp() {
+  stampBtn.setAttribute('aria-pressed', String(stampOn));
+  const d = new Date();
+  screen.textContent = stampOn ? `'${pad(d.getFullYear() % 100)} ${pad(d.getMonth() + 1)} ${pad(d.getDate())}` : `'-- -- --`;
+  screen.classList.toggle('on', stampOn);
+}
+
+// ---------- picking ----------
 
 picker.addEventListener('change', () => {
   const files = [...picker.files];
   picker.value = '';
+  if (!files.length) return;
   for (const file of files) {
-    const item = { file, seed: (Math.random() * 2 ** 32) >>> 0, out: null, version: 0 };
-    item.tile = makeTile(item);
+    const seed = (Math.random() * 2 ** 32) >>> 0;
+    const item = { file, seed, out: null, version: 0, tilt: ((seed % 1000) / 1000 - 0.5) * 3 };
+    item.el = makePrint(item);
     items.push(item);
-    grid.append(item.tile);
+    prints.append(item.el);
     enqueue(item);
   }
+  item0Scroll();
   refresh();
+  queue.then(flash);
 });
 
 clearBtn.addEventListener('click', () => {
   for (const item of items) revoke(item);
   items.length = 0;
-  grid.innerHTML = '';
+  prints.innerHTML = '';
   refresh();
 });
 
 saveAll.addEventListener('click', () => save(items.filter((i) => i.out).map((i) => i.out.file)));
 
-function enqueue(item) {
-  const version = ++item.version;
-  setBusy(item, 'Developing…');
-  queue = queue.then(() => process(item, version)).catch(() => {});
+function item0Scroll() {
+  const first = prints.firstElementChild;
+  if (first && items.length <= 6) first.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
 }
 
-async function process(item, version) {
+// ---------- developing ----------
+
+function enqueue(item) {
+  const version = ++item.version;
+  if (!item.out) setDeveloping(item);
+  queue = queue.then(() => develop(item, version)).catch(() => {});
+}
+
+async function develop(item, version) {
   if (!items.includes(item) || version !== item.version) return;
   try {
     if (!item.prepared) item.prepared = await prepare(item.file);
     const { img, w, h, tiff, date } = item.prepared;
 
-    const canvas = await digicam(img, {
-      width: w, height: h, seed: item.seed,
-      dateStamp: stampToggle.checked ? date : null,
-    });
+    const canvas = await digicam(img, { width: w, height: h, seed: item.seed, dateStamp: stampOn ? date : null });
     const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', OUTPUT_QUALITY));
-    if (!blob) throw new Error('Could not save this photo');
+    if (!blob) throw new Error('this phone ran out of memory for this photo');
     let bytes = new Uint8Array(await blob.arrayBuffer());
     if (tiff) { try { bytes = insertExif(bytes, patchExif(tiff, { width: w, height: h })); } catch {} }
 
@@ -74,10 +95,9 @@ async function process(item, version) {
     const name = `${(item.file.name || 'photo').replace(/\.[^.]+$/, '')}-flick.jpg`;
     if (item.out) URL.revokeObjectURL(item.out.preview);
     item.out = { file: new File([bytes], name, { type: 'image/jpeg', lastModified: item.file.lastModified }), preview };
-    showResult(item);
+    showPrint(item);
   } catch (err) {
-    item.tile.innerHTML = '';
-    item.tile.append(el('div', 'err', `Couldn't process this photo: ${err.message}`));
+    showError(item, err.message);
   }
   refresh();
 }
@@ -90,7 +110,7 @@ async function prepare(file) {
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.src = url;
-  try { await img.decode(); } catch { throw new Error(`this browser can't open ${file.type || 'this file'}`); }
+  try { await img.decode(); } catch { throw new Error(`can't open ${file.type || 'this kind of file'}. try a jpeg or heic photo`); }
 
   let w = img.naturalWidth, h = img.naturalHeight;
   if (w * h > MAX_PIXELS) {
@@ -111,52 +131,79 @@ async function previewUrl(canvas) {
   return URL.createObjectURL(blob);
 }
 
-// ---------- tiles ----------
+// ---------- prints ----------
 
-function makeTile(item) {
-  const tile = el('div', 'tile');
-  tile.append(el('div', 'busy', 'Developing…'));
-  return tile;
+function makePrint(item) {
+  const print = el('figure', 'print');
+  print.style.setProperty('--tilt', `${item.tilt.toFixed(2)}deg`);
+  print.style.margin = '0';
+  return print;
 }
 
-function setBusy(item, text) {
-  if (item.out) return; // keep showing the old result while re-developing
-  item.tile.innerHTML = '';
-  item.tile.append(el('div', 'busy', text));
+function setDeveloping(item) {
+  item.el.innerHTML = '';
+  const photo = el('div', 'photo');
+  photo.append(el('div', 'developing', 'developing…'));
+  const caption = el('figcaption', 'caption');
+  caption.append(el('span', 'date', ' '));
+  item.el.append(photo, caption);
 }
 
-function showResult(item) {
-  const tile = item.tile;
-  tile.innerHTML = '';
-  tile.classList.remove('showing-original');
+function showPrint(item) {
+  const print = item.el;
+  print.innerHTML = '';
+  print.classList.remove('showing-original');
+
+  const photo = el('div', 'photo');
   const img = el('img');
   img.src = item.out.preview;
-  img.alt = item.file.name || 'filtered photo';
+  img.alt = `filtered ${item.file.name || 'photo'}`;
   img.draggable = false;
-  const badge = el('span', 'badge', 'Original');
-  const btn = el('button', 'save', 'Save');
-  btn.addEventListener('click', (e) => { e.stopPropagation(); save([item.out.file]); });
+  photo.append(img);
+
+  const caption = el('figcaption', 'caption');
+  const d = item.prepared.date;
+  const date = el('span', 'date', `${MONTHS[d.getMonth()]} ${d.getDate()} '${pad(d.getFullYear() % 100)}`);
+  const orig = el('span', 'original', 'the original');
+  const btn = el('button', 'save', 'save');
+  btn.type = 'button';
+  btn.addEventListener('click', () => save([item.out.file]));
+  caption.append(date, orig, btn);
 
   // press and hold to compare with the original
   const show = (on) => {
-    if (!item.prepared) return;
     img.src = on ? item.prepared.url : item.out.preview;
-    tile.classList.toggle('showing-original', on);
+    print.classList.toggle('showing-original', on);
   };
   img.addEventListener('pointerdown', () => show(true));
   for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) img.addEventListener(ev, () => show(false));
   img.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  tile.append(img, badge, btn);
+  print.append(photo, caption);
+}
+
+function showError(item, message) {
+  item.el.innerHTML = '';
+  item.el.append(el('div', 'err', `couldn't develop this one: ${message}`));
 }
 
 function refresh() {
   const n = items.length, ready = items.filter((i) => i.out).length;
-  empty.hidden = n > 0;
   hint.hidden = ready === 0;
   bar.hidden = n === 0;
-  saveAll.disabled = ready === 0;
-  saveAll.textContent = ready < n ? `Developing ${ready}/${n}…` : n === 1 ? 'Save photo' : `Save all ${n}`;
+  prompt.textContent = n ? 'tap the camera to add more' : 'tap the camera to pick photos';
+  saveAll.disabled = ready < n;
+  saveAll.innerHTML = '';
+  if (ready < n) saveAll.textContent = `developing ${ready}/${n}`;
+  else if (n === 1) saveAll.textContent = 'save photo';
+  else { saveAll.append('save '); saveAll.append(el('b', '', `all ${n}`)); }
+}
+
+function flash() {
+  if (!items.some((i) => i.out)) return;
+  flashbulb.classList.remove('go');
+  void flashbulb.offsetWidth;
+  flashbulb.classList.add('go');
 }
 
 // ---------- saving ----------

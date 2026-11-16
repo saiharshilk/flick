@@ -5,111 +5,213 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Flick">
-  <meta name="theme-color" content="#0d0b0e">
-  <title>Flick</title>
+  <meta name="apple-mobile-web-app-title" content="flick">
+  <meta name="theme-color" content="#2b2826" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f4ece5" media="(prefers-color-scheme: light)">
+  <title>flick ⋆.˚</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0d0b0e; --card: #18151a; --line: #2b2630; --text: #f4eff5; --muted: #9b92a0;
-      --accent: #ff6ad5; --stamp: #ff8c2a;
+      /* warm charcoal room (dark) */
+      --bg: #2b2826;
+      --surface: #353230;
+      --line: #46413d;
+      --text: #ece5da;
+      --muted: #9d958a;
+      --blue: #5b9bef;
+      --stamp: #ff8a2b;
+      --paper: #f6f0e4;
+      --paper-ink: #5a4a3c;
+
+      --serif: "Nanum Myeongjo", Georgia, serif;
+      --hand: "Nanum Pen Script", "Bradley Hand", cursive;
+      --mono: "Nanum Gothic Coding", ui-monospace, Menlo, monospace;
     }
     @media (prefers-color-scheme: light) {
       :root:not([data-theme="dark"]) {
-        --bg: #f7f4f7; --card: #ffffff; --line: #e6e0e7; --text: #19141b; --muted: #6f6673;
-        --accent: #d4329f; --stamp: #e06a10;
+        /* sift paper (light) */
+        --bg: #f4ece5;
+        --surface: #ebe1d7;
+        --line: #d9cbbd;
+        --text: #3d2a1c;
+        --muted: #8a7563;
+        --blue: #0466c8;
+        --stamp: #e8700f;
+        --paper: #fffdf8;
+        --paper-ink: #6b5848;
       }
     }
+
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { background: var(--bg); }
     body {
-      margin: 0; background: var(--bg); color: var(--text);
-      font: 15px/1.45 -apple-system, system-ui, sans-serif;
-      padding: max(20px, env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom));
+      margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+      font: 400 17px/1.6 var(--serif);
+      padding: max(28px, env(safe-area-inset-top)) 16px calc(116px + env(safe-area-inset-bottom));
     }
-    main { max-width: 720px; margin: 0 auto; }
-    header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 18px; }
-    h1 { font-size: 2rem; margin: 0; letter-spacing: -0.03em; }
-    .stamp { font: 600 .95rem ui-monospace, Menlo, monospace; color: var(--stamp); text-shadow: 0 0 8px color-mix(in srgb, var(--stamp) 60%, transparent); }
+    main { max-width: 640px; margin: 0 auto; text-align: center; }
+    :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 6px; }
 
-    .pick {
-      display: block; width: 100%; padding: 18px; border-radius: 16px; border: 0;
-      background: var(--accent); color: #fff; font: 700 1.05rem/1 inherit; text-align: center; cursor: pointer;
-    }
-    input[type=file] { display: none; }
+    /* ---------- header ---------- */
+    h1 { font: 700 2.3rem/1 var(--serif); letter-spacing: -0.02em; margin: 0; }
+    h1 .sparkle { font-weight: 400; font-size: 1.1rem; color: var(--muted); letter-spacing: 0.1em; vertical-align: super; }
+    .tagline { font: 1.6rem/1.1 var(--hand); color: var(--muted); margin: 6px 0 0; }
 
-    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0 18px; }
-    .chip {
-      border: 1.5px solid var(--line); background: var(--card); color: var(--text);
-      padding: 8px 14px; border-radius: 999px; font: 600 .9rem inherit; cursor: pointer;
+    /* ---------- the camera (hero + photo picker) ---------- */
+    .camera {
+      position: relative; display: block; width: 216px; height: 140px; margin: 34px auto 14px;
+      cursor: pointer; border: 0; padding: 0; background: none;
     }
-    .chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
-    .chip:disabled { opacity: .45; cursor: default; }
-    .spacer { flex: 1; }
-    .toggle { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .9rem; cursor: pointer; user-select: none; }
-    .switch { position: relative; width: 44px; height: 26px; border-radius: 13px; background: var(--line); transition: background .2s; flex: none; }
-    .switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; }
-    .toggle input:checked + .switch { background: var(--stamp); }
-    .toggle input:checked + .switch::after { transform: translateX(18px); }
-    .toggle input { display: none; }
+    .camera input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; font-size: 0; }
+    .camera .body {
+      position: absolute; inset: 14px 0 0; border-radius: 16px;
+      background: linear-gradient(160deg, #e9e7e3 0%, #c9c6c0 45%, #a9a59e 100%);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,.7), inset 0 -3px 0 rgba(0,0,0,.18), 0 10px 24px rgba(0,0,0,.28);
+      transition: transform .12s ease;
+    }
+    .camera .shutter {
+      position: absolute; top: 4px; right: 34px; width: 34px; height: 14px; border-radius: 6px 6px 2px 2px;
+      background: linear-gradient(#d8d5d0, #a7a39c); box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+      transition: transform .12s ease;
+    }
+    .camera .flash {
+      position: absolute; top: 26px; left: 16px; width: 40px; height: 20px; border-radius: 4px;
+      background: linear-gradient(135deg, #fffef6, #d9d6c9 60%, #f3f1e6);
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,.12);
+    }
+    .camera .lens {
+      position: absolute; top: 36px; left: 50%; width: 84px; height: 84px; margin-left: -42px; border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #0d1220 0 30%, #23304a 31% 40%, #0c0f16 41% 54%, #8d8a84 55% 62%, #d3d0ca 63% 72%, #9a968f 73% 100%);
+      box-shadow: 0 2px 4px rgba(0,0,0,.3), inset 0 0 0 1px rgba(0,0,0,.25);
+    }
+    .camera .lens::after {
+      content: ''; position: absolute; top: 24px; left: 28px; width: 12px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,.55); transform: rotate(-30deg);
+    }
+    .camera .led { position: absolute; top: 30px; right: 20px; width: 7px; height: 7px; border-radius: 50%; background: #e2463a; box-shadow: 0 0 6px #ff5a4a; }
+    .camera .brand { position: absolute; bottom: 8px; right: 16px; font: 1.25rem/1 var(--hand); color: #6b665f; }
+    .camera .screen {
+      position: absolute; bottom: 10px; left: 14px; padding: 2px 6px; border-radius: 3px;
+      background: #1d2a22; font: 700 .7rem/1.3 var(--mono); color: #3b4d40; letter-spacing: .04em;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,.6);
+    }
+    .camera .screen.on { color: var(--stamp); text-shadow: 0 0 4px rgba(255,138,43,.7); }
+    .camera:hover .body { transform: translateY(-2px); }
+    .camera:active .body { transform: translateY(1px); }
+    .camera:active .shutter { transform: translateY(3px); }
+    .camera:focus-within { outline: 2px solid var(--blue); outline-offset: 6px; border-radius: 18px; }
 
-    .empty { color: var(--muted); text-align: center; padding: 48px 12px; border: 1.5px dashed var(--line); border-radius: 16px; }
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    @media (min-width: 600px) { .grid { grid-template-columns: repeat(3, 1fr); } }
-    .tile { position: relative; border-radius: 12px; overflow: hidden; background: var(--card); border: 1px solid var(--line); }
-    .tile img { display: block; width: 100%; height: auto; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-    .tile .busy { aspect-ratio: 3/4; display: grid; place-items: center; color: var(--muted); font-size: .85rem; }
-    .tile .badge {
-      position: absolute; top: 8px; left: 8px; padding: 3px 8px; border-radius: 999px;
-      background: rgba(0,0,0,.6); color: #fff; font-size: .72rem; font-weight: 600; opacity: 0; transition: opacity .15s;
-    }
-    .tile.showing-original .badge { opacity: 1; }
-    .tile .save {
-      position: absolute; right: 8px; top: 8px; border: 0; border-radius: 999px; padding: 6px 12px;
-      background: rgba(0,0,0,.6); color: #fff; font: 600 .8rem inherit; cursor: pointer; backdrop-filter: blur(6px);
-    }
-    .tile .err { padding: 16px; color: #f87171; font-size: .85rem; }
-    .hint { color: var(--muted); font-size: .8rem; text-align: center; margin: 12px 0 0; }
+    .prompt { color: var(--muted); font-size: .95rem; margin: 0; }
 
+    /* ---------- options ---------- */
+    .options { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 26px 0 30px; }
+    .pill {
+      font: 400 .85rem/1 var(--mono); color: var(--text); background: var(--surface);
+      border: 1px solid var(--line); border-radius: 999px; padding: 10px 15px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .pill[aria-pressed="true"] { border-color: var(--text); }
+    .pill:disabled { color: var(--muted); cursor: default; border-style: dashed; background: transparent; }
+    .pill .dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--muted); }
+    .pill[aria-pressed="true"] .dot { background: var(--stamp); border-color: var(--stamp); box-shadow: 0 0 6px var(--stamp); }
+
+    /* ---------- prints ---------- */
+    .prints { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px 16px; text-align: left; }
+    @media (min-width: 620px) { .prints { grid-template-columns: repeat(3, 1fr); } }
+    .print {
+      position: relative; background: var(--paper); padding: 7px 7px 0; border-radius: 3px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 8px 18px rgba(0,0,0,.16);
+      transform: rotate(var(--tilt, 0deg));
+    }
+    .print .photo { position: relative; background: #1b1918; overflow: hidden; }
+    .print img { display: block; width: 100%; height: auto; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+    .print .developing {
+      aspect-ratio: 3 / 4; display: grid; place-items: center;
+      font: 1.4rem/1 var(--hand); color: #8e857a;
+      background: linear-gradient(180deg, #2a2624, #3a3330);
+    }
+    .print .caption {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      padding: 4px 2px 6px; min-height: 36px;
+    }
+    .print .date { font: 1.35rem/1 var(--hand); color: var(--paper-ink); white-space: nowrap; }
+    .print .original { font: 1.2rem/1 var(--hand); color: var(--paper-ink); white-space: nowrap; display: none; }
+    .print.showing-original .original { display: inline; }
+    .print.showing-original .date { display: none; }
+    .print .save {
+      font: 400 .72rem/1 var(--mono); color: var(--paper-ink); background: transparent;
+      border: 1px solid #d6cbbb; border-radius: 999px; padding: 6px 10px; cursor: pointer;
+    }
+    .print .err { padding: 18px 8px; font-size: .85rem; color: #b2433a; background: var(--paper); }
+
+    .hint { font: 1.35rem/1.2 var(--hand); color: var(--muted); margin: 26px 0 0; }
+    footer { margin-top: 40px; font-size: .85rem; color: var(--muted); }
+
+    /* ---------- bottom bar ---------- */
     .bar {
-      position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-      background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(14px); border-top: 1px solid var(--line);
-      display: flex; gap: 10px; justify-content: center;
+      position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+      display: flex; gap: 6px; padding: 6px; border-radius: 999px;
+      background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--line);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.22);
     }
     .bar[hidden] { display: none; }
-    .bar button { flex: 1; max-width: 360px; padding: 15px; border-radius: 14px; border: 0; font: 700 1rem inherit; cursor: pointer; }
-    .bar .primary { background: var(--text); color: var(--bg); }
-    .bar .primary:disabled { opacity: .5; }
-    .bar .ghost { flex: 0 0 auto; background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 15px 18px; }
+    .bar button {
+      font: 400 .9rem/1 var(--mono); border: 0; border-radius: 999px; padding: 14px 18px; cursor: pointer;
+      background: transparent; color: var(--muted); white-space: nowrap;
+    }
+    .bar .primary { background: var(--bg); color: var(--text); padding: 14px 22px; }
+    .bar .primary b { color: var(--blue); font-weight: 700; }
+    .bar .primary:disabled { cursor: default; color: var(--muted); }
+
+    /* ---------- camera flash ---------- */
+    .flashbulb { position: fixed; inset: 0; background: #fffdf2; pointer-events: none; opacity: 0; z-index: 10; }
+    .flashbulb.go { animation: flash .5s ease-out; }
+    @keyframes flash { 0% { opacity: 0; } 8% { opacity: .85; } 100% { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) {
+      .flashbulb.go { animation: none; }
+      .camera .body, .camera .shutter { transition: none; }
+    }
   </style>
 </head>
 <body>
 <main>
-  <header>
-    <h1>Flick</h1>
-    <span class="stamp" id="today"></span>
-  </header>
+  <h1>flick <span class="sparkle" aria-hidden="true">⋆.˚</span></h1>
+  <p class="tagline">your photos, but from 2006</p>
 
-  <label class="pick">Choose photos
+  <label class="camera" aria-label="Pick photos">
     <input id="picker" type="file" accept="image/*" multiple>
+    <span class="shutter" aria-hidden="true"></span>
+    <span class="body" aria-hidden="true">
+      <span class="flash"></span>
+      <span class="led"></span>
+      <span class="lens"></span>
+      <span class="screen" id="screen">'-- -- --</span>
+      <span class="brand">flick</span>
+    </span>
   </label>
+  <p class="prompt" id="prompt">tap the camera to pick photos</p>
 
-  <div class="controls">
-    <button class="chip" aria-pressed="true">Digicam</button>
-    <button class="chip" disabled>More soon</button>
-    <span class="spacer"></span>
-    <label class="toggle">Date stamp
-      <input type="checkbox" id="stamp"><span class="switch"></span>
-    </label>
+  <div class="options">
+    <button class="pill" aria-pressed="true" type="button">digicam</button>
+    <button class="pill" type="button" disabled>more soon</button>
+    <button class="pill" id="stamp" type="button" aria-pressed="false"><span class="dot" aria-hidden="true"></span>date stamp</button>
   </div>
 
-  <div id="empty" class="empty">Pick one or more photos. Everything happens on your phone; nothing is uploaded.</div>
-  <div id="grid" class="grid"></div>
-  <p id="hint" class="hint" hidden>Press and hold a photo to see the original.</p>
+  <div id="prints" class="prints"></div>
+  <p id="hint" class="hint" hidden>hold a print to see the original</p>
+
+  <footer>everything stays on your phone ♡</footer>
 </main>
 
 <div id="bar" class="bar" hidden>
-  <button id="clear" class="ghost">Clear</button>
-  <button id="saveAll" class="primary">Save all</button>
+  <button id="clear" type="button">clear</button>
+  <button id="saveAll" class="primary" type="button">save</button>
 </div>
+
+<div class="flashbulb" id="flashbulb" aria-hidden="true"></div>
 
 <script type="module" src="./app.js"></script>
 </body>
