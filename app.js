@@ -3,14 +3,15 @@ import { digicam } from './lib/digicam.js';
 import { moody } from './lib/moody.js';
 
 const FILTERS = {
-  digicam: { run: digicam, tagline: 'your photos, but from 2006' },
-  moody: { run: moody, tagline: 'your photos, after dark' },
+  digicam: { run: digicam, tagline: 'your photos, but from 2006', quality: 0.92 },
+  moody: { run: moody, tagline: 'your photos, after dark', quality: 0.97 },
 };
 
 // Safari can't make canvases over ~16.8MP. Bigger photos (24/48MP iPhone
 // shots) are scaled to fit, keeping the exact aspect ratio.
 const MAX_PIXELS = 16_000_000;
-const OUTPUT_QUALITY = 0.92;
+// Every export is at least 4K on its long side; smaller photos are scaled up.
+const MIN_LONG_SIDE = 3840;
 const PREVIEW_LONG = 900;
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
@@ -111,7 +112,7 @@ async function develop(item, version) {
 
     const used = filter;
     const canvas = await FILTERS[used].run(img, { width: w, height: h, seed: item.seed, dateStamp: stampOn ? date : null });
-    const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', OUTPUT_QUALITY));
+    const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', FILTERS[used].quality));
     if (!blob) throw new Error('this phone ran out of memory for this photo');
     let bytes = new Uint8Array(await blob.arrayBuffer());
     if (tiff) { try { bytes = insertExif(bytes, patchExif(tiff, { width: w, height: h })); } catch {} }
@@ -141,6 +142,10 @@ async function prepare(file) {
   try { await img.decode(); } catch { throw new Error(`can't open ${file.type || 'this kind of file'}. try a jpeg or heic photo`); }
 
   let w = img.naturalWidth, h = img.naturalHeight;
+  if (Math.max(w, h) < MIN_LONG_SIDE) {
+    const s = MIN_LONG_SIDE / Math.max(w, h);
+    w = Math.round(w * s); h = Math.round(h * s);
+  }
   if (w * h > MAX_PIXELS) {
     const s = Math.sqrt(MAX_PIXELS / (w * h));
     w = Math.round(w * s); h = Math.round(h * s);

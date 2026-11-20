@@ -13,5 +13,5 @@ Everything runs on your device. Photos are never uploaded.
 
 ## Notes
 
-- Photos over ~16MP are scaled to fit Safari's canvas limit (same aspect ratio).
+- Exports are at least 4K on the long side (3840px); smaller photos are scaled up. Photos over ~16MP are scaled to fit Safari's canvas limit (same aspect ratio). Moody saves at 97% JPEG quality, Digicam at 92%.
 - EXIF is copied into the output, but saving to Photos on iOS through the share sheet strips location and date, so copies land at today's date.
