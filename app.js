@@ -1,5 +1,11 @@
 import { extractExif, readMeta, patchExif, insertExif } from './lib/meta.js';
 import { digicam } from './lib/digicam.js';
+import { moody } from './lib/moody.js';
+
+const FILTERS = {
+  digicam: { run: digicam, tagline: 'your photos, but from 2006' },
+  moody: { run: moody, tagline: 'your photos, after dark' },
+};
 
 // Safari can't make canvases over ~16.8MP. Bigger photos (24/48MP iPhone
 // shots) are scaled to fit, keeping the exact aspect ratio.
@@ -16,6 +22,27 @@ const stampBtn = $('stamp'), screen = $('screen'), flashbulb = $('flashbulb');
 const items = [];
 let queue = Promise.resolve();
 let stampOn = false;
+let filter = 'digicam';
+
+// ---------- filter choice ----------
+
+const filterPills = [...document.querySelectorAll('[data-filter]')];
+try { const saved = localStorage.getItem('flick.filter'); if (saved in FILTERS) filter = saved; } catch {}
+renderFilter();
+for (const pill of filterPills) {
+  pill.addEventListener('click', () => {
+    if (pill.dataset.filter === filter) return;
+    filter = pill.dataset.filter;
+    try { localStorage.setItem('flick.filter', filter); } catch {}
+    renderFilter();
+    for (const item of items) enqueue(item);
+  });
+}
+
+function renderFilter() {
+  for (const pill of filterPills) pill.setAttribute('aria-pressed', String(pill.dataset.filter === filter));
+  $('tagline').textContent = FILTERS[filter].tagline;
+}
 
 // ---------- date stamp toggle ----------
 
@@ -82,7 +109,8 @@ async function develop(item, version) {
     if (!item.prepared) item.prepared = await prepare(item.file);
     const { img, w, h, tiff, date } = item.prepared;
 
-    const canvas = await digicam(img, { width: w, height: h, seed: item.seed, dateStamp: stampOn ? date : null });
+    const used = filter;
+    const canvas = await FILTERS[used].run(img, { width: w, height: h, seed: item.seed, dateStamp: stampOn ? date : null });
     const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', OUTPUT_QUALITY));
     if (!blob) throw new Error('this phone ran out of memory for this photo');
     let bytes = new Uint8Array(await blob.arrayBuffer());
@@ -92,7 +120,7 @@ async function develop(item, version) {
     canvas.width = canvas.height = 0; // free memory on iOS
     if (version !== item.version || !items.includes(item)) { URL.revokeObjectURL(preview); return; }
 
-    const name = `${(item.file.name || 'photo').replace(/\.[^.]+$/, '')}-flick.jpg`;
+    const name = `${(item.file.name || 'photo').replace(/\.[^.]+$/, '')}-${used}.jpg`;
     if (item.out) URL.revokeObjectURL(item.out.preview);
     item.out = { file: new File([bytes], name, { type: 'image/jpeg', lastModified: item.file.lastModified }), preview };
     showPrint(item);

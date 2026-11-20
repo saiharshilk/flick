@@ -178,7 +178,7 @@
 <body>
 <main>
   <h1>flick</h1>
-  <p class="tagline">your photos, but from 2006</p>
+  <p class="tagline" id="tagline">your photos, but from 2006</p>
 
   <label class="camera" aria-label="Pick photos">
     <input id="picker" type="file" accept="image/*" multiple>
@@ -194,8 +194,8 @@
   <p class="prompt" id="prompt">tap the camera to pick photos</p>
 
   <div class="options">
-    <button class="pill" aria-pressed="true" type="button">digicam</button>
-    <button class="pill" type="button" disabled>more soon</button>
+    <button class="pill" data-filter="digicam" aria-pressed="true" type="button">digicam</button>
+    <button class="pill" data-filter="moody" aria-pressed="false" type="button">moody</button>
     <button class="pill" id="stamp" type="button" aria-pressed="false"><span class="dot" aria-hidden="true"></span>date stamp</button>
   </div>
 

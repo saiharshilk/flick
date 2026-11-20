@@ -9,6 +9,7 @@ Everything runs on your device. Photos are never uploaded.
 ## Filters
 
 - **Digicam**: the early-2000s point-and-shoot look. Soft detail, colored shadow noise, crushed blacks, warm/magenta cast, blooming highlights, cheap in-camera sharpening. An orange date stamp is optional. Settings live in `DIGICAM` in `lib/digicam.js`.
+- **Moody**: dark, clean, expensive. Neighborhood-aware highlights/shadows, midtone darkening that leaves lamps glowing, local contrast, deep blacks with a soft white roll-off, vibrance, light sharpening; full resolution, no grain. Bright daytime scenes get a lighter touch. Settings live in `MOODY` in `lib/moody.js`.
 
 ## Notes
 
